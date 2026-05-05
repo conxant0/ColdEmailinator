@@ -8,3 +8,4 @@ data/drafts/
 data/sent/
 data/parsed/
 docs/
+.venv/
