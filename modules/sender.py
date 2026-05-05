@@ -51,10 +51,32 @@ def _get_gmail_service():
     return build("gmail", "v1", credentials=creds)
 
 
-def _build_raw_message(to: str, subject: str, body: str) -> dict:
+def _get_thread_info(service, gmail_message_id: str) -> dict:
+    try:
+        msg = service.users().messages().get(
+            userId="me", id=gmail_message_id, format="metadata",
+            metadataHeaders=["Message-ID"],
+        ).execute()
+        headers = msg.get("payload", {}).get("headers", [])
+        rfc_message_id = next(
+            (h["value"] for h in headers if h["name"].lower() == "message-id"),
+            None,
+        )
+        return {"rfc_message_id": rfc_message_id, "thread_id": msg.get("threadId")}
+    except Exception as e:
+        logger.warning("Could not fetch thread info: %s", e)
+        return {"rfc_message_id": None, "thread_id": None}
+
+
+def _build_raw_message(
+    to: str, subject: str, body: str, in_reply_to: str | None = None
+) -> dict:
     message = MIMEText(body)
     message["to"] = to
     message["subject"] = subject
+    if in_reply_to:
+        message["In-Reply-To"] = in_reply_to
+        message["References"] = in_reply_to
     raw = base64.urlsafe_b64encode(message.as_bytes()).decode()
     return {"raw": raw}
 
@@ -68,7 +90,7 @@ def _save_log(log: dict, slug: str, iteration: int) -> None:
         json.dump(log, f, indent=2)
 
 
-def send_email(draft: dict) -> str | None:
+def send_email(draft: dict, in_reply_to_gmail_id: str | None = None) -> str | None:
     org = draft["org"]
     to = draft["to"]
     subject = draft["subject"]
@@ -97,7 +119,12 @@ def send_email(draft: dict) -> str | None:
 
     # --- Step 2: send ---
     try:
-        raw_message = _build_raw_message(to, subject, body)
+        thread_info = _get_thread_info(service, in_reply_to_gmail_id) if in_reply_to_gmail_id else {}
+        raw_message = _build_raw_message(
+            to, subject, body, in_reply_to=thread_info.get("rfc_message_id")
+        )
+        if thread_info.get("thread_id"):
+            raw_message["threadId"] = thread_info["thread_id"]
         result = service.users().messages().send(userId="me", body=raw_message).execute()
         gmail_message_id = result["id"]
         _save_log(

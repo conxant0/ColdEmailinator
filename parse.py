@@ -105,6 +105,7 @@ def main():
         with open(run_path, "w") as f:
             json.dump(run, f, indent=2)
 
+        last_sent_id = run["sent_message_ids"][-1] if run["sent_message_ids"] else None
         draft = draft_email(
             org, email, goal,
             run["org_context"],
@@ -112,7 +113,7 @@ def main():
             run["collected"],
             run["gaps"],
         )
-        gmail_message_id = send_email(draft)
+        gmail_message_id = send_email(draft, in_reply_to_gmail_id=last_sent_id)
 
         if gmail_message_id:
             run["sent_message_ids"].append(gmail_message_id)
