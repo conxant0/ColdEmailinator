@@ -1,0 +1,10 @@
+.env
+credentials.json
+token.json
+__pycache__/
+*.pyc
+data/runs/
+data/drafts/
+data/sent/
+data/parsed/
+docs/
