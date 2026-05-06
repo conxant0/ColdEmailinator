@@ -210,4 +210,6 @@ Intermediate files are also saved for inspection:
 - Single Gmail account only — no multi-sender support
 - Reply detection matches by sender address — breaks if org replies from a different address
 - Only collects information — cannot take actions like scheduling, form submission, or anything requiring authentication
-- Reply detection depends on Gmail API sync speed — running parse.py too quickly after a reply arrives may return a false negative, triggering an unnecessary follow-up email.
+- Reply detection includes a single automatic retry after 10 seconds
+  to account for Gmail API sync delay — if no reply is found on either
+  check, the user is prompted to run parse.py again.

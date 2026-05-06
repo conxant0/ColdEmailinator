@@ -165,7 +165,13 @@ def parse_reply(
         sys.exit(f"Gmail API error while searching for reply: {e}")
 
     if reply_id is None:
-        return None
+        time.sleep(10)
+        try:
+            reply_id = _find_reply(service, email, gmail_message_ids)
+        except Exception as e:
+            sys.exit(f"Gmail API error while searching for reply: {e}")
+        if reply_id is None:
+            return None
 
     try:
         message = service.users().messages().get(
