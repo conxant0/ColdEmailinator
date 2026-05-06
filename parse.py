@@ -32,6 +32,38 @@ def _merge_collected(existing: list, new: list) -> list:
     return list(merged.values())
 
 
+def _run_summary(org: str, goal: str, final_status: str, run: dict, slug: str) -> str:
+    sep = "=" * 45
+    lines = [
+        sep,
+        "  ColdEmailinator — Run Summary",
+        sep,
+        f"Org:          {org}",
+        f"Goal:         {goal}",
+        f"Status:       {final_status.upper()}",
+    ]
+    if final_status == "incomplete":
+        lines.append("Note: max iterations reached before goal was fully satisfied")
+    lines += [
+        f"Iterations:   {run['iteration']} of {run['max_iterations']}",
+        "",
+        "Collected:",
+    ]
+    for item in run["collected"]:
+        if item.get("found"):
+            lines.append(f"  ✓ {item['field']} — {item['value']}")
+        else:
+            lines.append(f"  ✗ {item['field']} — not found")
+    lines += [
+        "",
+        f"Emails sent:  {len(run['sent_message_ids'])}",
+        "",
+        f"Saved to: data/parsed/{slug}.json",
+        sep,
+    ]
+    return "\n".join(lines)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", required=True)
@@ -98,7 +130,11 @@ def main():
         with open(run_path, "w") as f:
             json.dump(run, f, indent=2)
 
-        print(f"[{org}] — goal satisfied. Output saved to data/parsed/{slug}.json")
+        summary = _run_summary(org, goal, final_status, run, slug)
+        print(summary)
+        summary_path = os.path.join(parsed_dir, f"{slug}_summary.md")
+        with open(summary_path, "w") as f:
+            f.write(summary + "\n")
 
     else:
         run["iteration"] += 1
