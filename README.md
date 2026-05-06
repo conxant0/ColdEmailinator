@@ -24,6 +24,14 @@ Replaces hours of manual research, email drafting, and follow-up with a single c
 
 Email outreach is the only reliable way to get data that isn't publicly available. Scraping only surfaces what's already public — asking directly gets what isn't. Before sending, the agent enriches its knowledge of the org using Tavily web search and RAG-style context injection, so emails reference real details about the org's work rather than generic templates. This increases the chance of a response.
 
+## V1 Scope
+
+In scope: org research via web search, personalised email drafting,
+Gmail send, reply parsing, goal evaluation, follow-up loop (max 3 iterations).
+
+Deliberately deferred: email verification, batch multi-org processing,
+async inbox polling, action-based goals (scheduling, form submission).
+
 ## Trade-offs
 
 - File-based pipeline over direct function calls — slower, but every intermediate state is inspectable and debuggable
