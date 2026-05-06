@@ -68,10 +68,20 @@ def _get_thread_info(service, gmail_message_id: str) -> dict:
         return {"rfc_message_id": None, "thread_id": None}
 
 
+def _plain_to_html(body: str) -> str:
+    paragraphs = body.split("\n\n")
+    parts = []
+    for para in paragraphs:
+        inner = para.replace("\n", "<br>")
+        parts.append(f"<p>{inner}</p>")
+    return "\n".join(parts)
+
+
 def _build_raw_message(
     to: str, subject: str, body: str, in_reply_to: str | None = None
 ) -> dict:
-    message = MIMEText(body)
+    html_body = _plain_to_html(body)
+    message = MIMEText(html_body, "html")
     message["to"] = to
     message["subject"] = subject
     if in_reply_to:

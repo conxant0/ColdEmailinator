@@ -54,6 +54,9 @@ def _build_prompt(
             "- Clearly states the goal of this outreach",
             "- Is warm but professional",
             "- Is under 200 words",
+            "- Format: Dear [Name], then blank line, then body paragraphs with blank lines between them",
+            "- Write in full sentences with natural paragraph breaks (80+ character lines)",
+            "- Do NOT include a closing or signature",
             "",
             'Return a JSON object with exactly these keys:',
             '- "subject": a specific, non-generic subject line',
@@ -79,6 +82,9 @@ def _build_prompt(
             "- Asks only for what is still missing, with context for why it helps",
             "- Does not repeat any already-answered questions",
             "- Is under 150 words",
+            "- Format: Dear [Name], then blank line, then body paragraphs with blank lines between them",
+            "- Write in full sentences with natural paragraph breaks (80+ character lines)",
+            "- Do NOT include a closing or signature",
             "",
             'Return a JSON object with exactly these keys:',
             f'- "subject": use exactly this subject line: "Re: {original_subject}"',
@@ -154,7 +160,15 @@ def draft_email(
     result = _call_groq(prompt)
 
     body = result["body"].replace("\r\n", "\n").replace("\r", "\n")
+    # Collapse whitespace-only lines to empty lines, then collapse 3+ newlines
+    body = "\n".join("" if not line.strip() else line for line in body.split("\n"))
     body = re.sub(r"\n{3,}", "\n\n", body).strip()
+
+    # Ensure exactly one blank line after greeting (after "Dear ____,")
+    body = re.sub(r"^(Dear [^,]+,)\n+", r"\1\n\n", body, flags=re.MULTILINE)
+
+    # Add hardcoded signature with proper spacing
+    body = body + "\n\nBest Regards,\nPerry"
 
     draft = {
         "org": org,
